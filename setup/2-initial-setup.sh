@@ -1,88 +1,44 @@
-#!/bin/bash
+#!/usr/bin/expect -f
 ####################################################
-# run as: sudo ./2-initial-setup.sh <username>
-# pre-requisite: copy public rsa key to raspberryPi
-# e.g: scp ~/.ssh/id_rsa.pub pi@raspberry:
+# run as: sudo ./2-initial-setup.sh <username> <raspberryPiHostIp> [<ssh-public-key>]
+# pre-requisite: create an ssh key for raspberryPi
 ####################################################
-
-# SSH Setup
 
 # Parameters
-export USERNAME=$1
-export GROUPS=adm,dialout,cdrom,sudo,audio,video,plugdev,games,users,input,netdev,gpio,i2c,spi
+if [[ ($# -eq 2 || $# -eq 3) ]];
+then
+  export USERNAME=$1
+  export RPI_HOSTNAME=$2
+  if [[ $# -eq 3 ]];
+  then
+    export SSH_PUBLIC_KEY=$3
+  else
+    export SSH_PUBLIC_KEY=~/.ssh/id_rsa.pub
+  fi
+else
+  echo "Illegal number of parameters! run as: sudo ./2-initial-setup.sh <username> <raspberryPiHostIp> [<ssh-public-key>]"
+  exit(1)
+fi
 
-# Create new user
-useradd -m $USERNAME
-usermod -a -G $GROUPS $USERNAME
+# SSH Setup
+spawn ssh-copy-id -i $SSH_PUBLIC_KEY pi@$RPI_HOSTNAME
+# spawn scp "$SSH_PUBLIC_KEY pi@$RPI_HOSTNAME:/tmp"
+expect {
+  -re ".*es.*o.*" {
+    exp_send "yes\r"
+    exp_continue
+  }
+  -re ".*password.*" {
+    exp_send "raspberry\r"
+  }
+}
+interact
 
-# autologin on system boot
-sed -ie "s/pi/$USERNAME/g" /etc/systemd/system/getty.target.wants/getty@tty1.service
+# Setup new user
+ssh pi@$RPI_HOSTNAME 'bash -s' < initial-user-setup.sh $USERNAME
 
-## Delete pi user
-deluser --remove-all-files pi
+# Setup security
+ssh $USERNAME@$RPI_HOSTNAME 'bash -s' < initial-security-setup.sh $RPI_HOSTNAME
 
-## Fixed IP
-touch /etc/network/interfaces
-echo "
-auto eth0
-iface eth0 inet static
-       address 192.168.1.101
-       gateway 192.168.1.1
-       netmask 255.255.255.0
-       network 192.168.1.0
-       broadcast 192.168.1.255
-" >> /etc/network/interfaces
-/etc/init.d/networking restart 
-
-## SSH Config
-mkdir /home/$USERNAME/.ssh
-mv id_rsa.pub /home/$USERNAME/.ssh/authorized_keys
-chown -R $USERNAME:$USERNAME /home/$USERNAME/.ssh
-chmod 700 /home/$USERNAME/.ssh
-chmod 600 /home/$USERNAME/.ssh/authorized_keys
-sed -i "s/^PasswordAuthentication.*$/PasswordAuthentication no/g" /etc/ssh/sshd_config
-sed -i "s/^PermitRootLogin.*$/PermitRootLogin no/g" /etc/ssh/sshd_config
-service ssh restart
-
-## Create a Firewall
-iptables -L
-echo "
-*filter
-
-#  Allow all loopback (lo0) traffic and drop all traffic to 127/8 that doesn't use lo0
--A INPUT -i lo -j ACCEPT
--A INPUT -d 127.0.0.0/8 -j REJECT
-
-#  Accept all established inbound connections
--A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
-
-#  Allow all outbound traffic - you can modify this to only allow certain traffic
--A OUTPUT -j ACCEPT
-
-#  Allow HTTPS connections from anywhere (the normal port for SSL)
--A INPUT -p tcp --dport 443 -j ACCEPT
-
-#  Allow SSH connections
-#  The -dport number should be the same port number you set in sshd_config
--A INPUT -p tcp -m state --state NEW --dport 22 -j ACCEPT
-
-#  Log iptables denied calls
--A INPUT -m limit --limit 5/min -j LOG --log-prefix "iptables denied: " --log-level 7
-
-#  Drop all other inbound - default deny unless explicitly allowed policy
--A INPUT -j DROP
--A FORWARD -j DROP
-
-COMMIT
-" >> /etc/iptables.firewall.rules
-iptables-restore < /etc/iptables.firewall.rules
-iptables -L
-echo "
-#!/bin/sh
-/sbin/iptables-restore < /etc/iptables.firewall.rules" >> /etc/network/if-pre-up.d/firewall
-chmod +x /etc/network/if-pre-up.d/firewall
-apt-get -qq update
-apt-get -qq install -y fail2ban  # logs at /var/log/fail2ban.log
-
-# Reboot the system
-reboot
+# Setup storage disks
+ssh $USERNAME@$RPI_HOSTNAME 'bash -s' < initial-storage-setup.sh $USERNAME
