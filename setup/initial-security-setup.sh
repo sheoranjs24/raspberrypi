@@ -1,14 +1,18 @@
 #!/usr/bin/bash
 ####################################################
-# run as: sudo ./initial-security-setup.sh <raspberryPiHostIp>
+# run as: sudo ./initial-security-setup.sh <networkIP> [<raspberryPiHostIp>]
 ####################################################
 
 # Parameters
 if [[ $# -eq 1 ]];
 then
-  export RPI_HOSTNAME=$1
+  export NETWORK_IP=$1
+  export RPI_HOSTNAME=192.168.1.101  #todo: FIXME
+elif [[ $# -eq 2 ]];
+export NETWORK_IP=$1
+export RPI_HOSTNAME=$2
 else
-  echo "Illegal number of parameters! run as: sudo ./initial-security-setup.sh <raspberryPi_IP>"
+  echo "Illegal number of parameters! run as: sudo ./initial-security-setup.sh <networkIP> [<raspberryPiHostIp>]"
   exit(1)
 fi
 

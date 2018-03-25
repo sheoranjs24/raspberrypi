@@ -1,15 +1,17 @@
 #!/usr/bin/bash
 ####################################################
-# run as: sudo ./samba-setup.sh <username> <password>
+# run as: sudo ./samba-setup.sh <username> <password> <cidr>
 ####################################################
 
 # Parameters
-if [[ $# -eq 2 ]];
+if [[ $# -eq 3 ]];
 then
   export USERNAME=$1
   export PASSWORD=$2
+  export CIDR=$3
 else
-  echo "Illegal number of parameters! run as: sudo ./samba-setup.sh <username> <password>"
+  echo "Illegal number of parameters! run as: sudo ./samba-setup.sh <username> <password> <cidr>
+  e.g. ./samba-setup.sh user pass 192.168.0.0/24"
   exit(1)
 fi
 
@@ -55,10 +57,10 @@ cp /etc/iptables.firewall.rules /etc/iptables.firewall.rules.bk.`date '+%Y%m%d__
 sed "s/COMMIT//g" /etc/iptables.firewall.rules
 echo "
 #  Allow Samba connection from internal network
--A INPUT -s 192.168.0.0/24 -p tcp -m tcp --dport 137 -j ACCEPT
--A INPUT -s 192.168.0.0/24 -p tcp -m tcp --dport 138 -j ACCEPT
--A INPUT -s 192.168.0.0/24 -p tcp -m tcp --dport 139 -j ACCEPT
--A INPUT -s 192.168.0.0/24 -p tcp -m tcp --dport 445 -j ACCEPT
+-A INPUT -s $CIDR -p tcp -m tcp --dport 137 -j ACCEPT
+-A INPUT -s $CIDR -p tcp -m tcp --dport 138 -j ACCEPT
+-A INPUT -s $CIDR -p tcp -m tcp --dport 139 -j ACCEPT
+-A INPUT -s $CIDR -p tcp -m tcp --dport 445 -j ACCEPT
 
 COMMIT
 " >> /etc/iptables.firewall.rules
