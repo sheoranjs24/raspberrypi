@@ -21,6 +21,8 @@ fi
 ## List Devices
 ##----------------
 sudo lsblk -o UUID,NAME,FSTYPE,SIZE,MOUNTPOINT,LABEL,MODEL
+sudo fdisk -l
+df -h
 
 ##--------------------
 ## Install Dependencies
@@ -28,11 +30,16 @@ sudo lsblk -o UUID,NAME,FSTYPE,SIZE,MOUNTPOINT,LABEL,MODEL
 apt-get -qq update -y && apt-get -qq dist-upgrade -y && apt-get -qq autoremove -y
 apt-get -qq install -y hfsplus hfsutils hfsprogs  # HFS+ support
 apt-get -qq install -y ntfs-3g                    # NTFS support
-apt-get -qq install -y exfat-utils                # exFAT support
+apt-get -qq install -y exfat-utils exfat-fuse     # exFAT support
+apt-get -qq install -y dosfstools                 # FAT32 support
 apt-get -qq install -y rsync
 
 ##-----------------
 ## Format Drive
+# sudo mkfs.ext4 /dev/sda1 -L $DIRECTORY
+# sudo mkfs.hfsplus /dev/sda1 -v $DIRECTORY
+# sudo mkfs.ntfs /dev/sda1 -f -v -I -L $DIRECTORY
+# sudo mkfs.vfat /dev/sda1 -n $DIRECTORY
 ##-----------------
 echo "Do you wish to format the primary storage disk (y/n)?"
 read input1
@@ -42,7 +49,6 @@ if [[ $input1 == "y" ]]; then
       mkpart primary ext4 0GB 100%
 fi
 parted --script $DRIVE print
-# mkfs.ext4 /dev/sda1
 
 ##--------------------
 ## Create Mounts
