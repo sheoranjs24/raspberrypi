@@ -46,7 +46,8 @@ read input1
 if [[ $input1 == "y" ]]; then
   parted --script $DRIVE \
       mklabel gpt \
-      mkpart primary ext4 0GB 100%
+      mkpart primary ext4 0GB 100% \
+      name 1 $DIRECTORY
 fi
 parted --script $DRIVE print
 
