@@ -20,6 +20,7 @@ fi
 ##----------------
 ## List Devices
 ##----------------
+sudo blkid 
 sudo lsblk -o UUID,NAME,FSTYPE,SIZE,MOUNTPOINT,LABEL,MODEL
 sudo fdisk -l
 df -h
