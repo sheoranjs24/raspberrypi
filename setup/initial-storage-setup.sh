@@ -68,3 +68,13 @@ echo "UUID=$DRIVE_UUID\t/mnt/$DIRECTORY\text4\trw,auto,noatime,nofail\t0\t2" >> 
 ## Reboot
 ##--------------------
 reboot
+
+##--------------------
+## List
+##--------------------
+# list folder size
+du -shc /bkp/*
+
+# copy data
+nohup sudo cp -a /mnt/media1/backup/* /mnt/media2/backup/ &
+
