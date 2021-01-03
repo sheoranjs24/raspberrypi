@@ -23,8 +23,11 @@ cp /home/pi/.ssh/id_rsa.pub /home/$USERNAME/.ssh/authorized_keys
 chown -R $USERNAME:$USERNAME /home/$USERNAME/.ssh
 chmod 700 /home/$USERNAME/.ssh
 chmod 600 /home/$USERNAME/.ssh/authorized_keys
+sed -i "s/^ChallengeResponseAuthentication.*$/ChallengeResponseAuthentication no/g" /etc/ssh/sshd_config
 sed -i "s/^PasswordAuthentication.*$/PasswordAuthentication no/g" /etc/ssh/sshd_config
 sed -i "s/^PermitRootLogin.*$/PermitRootLogin no/g" /etc/ssh/sshd_config
+sed -i "s/^UsePAM.*$/UsePAM no/g" /etc/ssh/sshd_config
+sed -i "s/^AllowUsers.*$/AllowUsers $USERNAME/g" /etc/ssh/sshd_config
 
 # autologin on system boot
 sed -ie "s/pi/$USERNAME/g" /etc/systemd/system/getty.target.wants/getty@tty1.service
