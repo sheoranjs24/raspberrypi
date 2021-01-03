@@ -102,6 +102,7 @@ chmod +x /etc/network/if-pre-up.d/firewall
 ##-----------------
 # Update the package list, update all packages and remove any packages that are no longer required
 apt-get -qq update -y && apt-get -qq dist-upgrade -y && apt-get -qq autoremove -y
+apt install openssh-server
 apt-get -qq install -y fail2ban  # logs at /var/log/fail2ban.log
 mkdir /var/log/fail2ban
 sudo chown root:adm /var/log/fail2ban
